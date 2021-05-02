@@ -158,9 +158,9 @@ void timer1(void)
    TCNT1 = 0;                             //RŸcksetzen des Timers
    //OSZILO;
    //ICR1 = 0xFF;
-   ICR1 = 0xFF;
-   OCR1A = 1; // 20ms
-  // OCR1B =100;
+   ICR1 = TIM1_TOP;
+   OCR1A = TIM1_TOP-2; // 20ms
+ //  OCR1B =100;
 //   OCR2A = 0x02;
    //ICR1 = 0xFF;
    //DDRB |= (1<<PORTB3);
@@ -178,7 +178,7 @@ ISR(TIM1_COMPA_vect) // CTC Timer2
    OSZILO;
    if (status & (1<<FAN_ON))
    {
-   OUTPORTB |= (1<<PWM_FAN_PIN); // Fan ON
+      OUTPORTB |= (1<<PWM_FAN_PIN); // Fan ON
    }
    
    if (timercount0 > 5) // Takt teilen, 1s
@@ -303,9 +303,9 @@ void main (void)
       loopcount0++;
       
       // Strom
-     
+      
       stromreg = readKanal(ADC_STROM_PIN); 
-       
+      
       if (stromreg < STROM_MIN)
       {
          //OSZITOGG;
@@ -329,38 +329,40 @@ void main (void)
             status &= ~(1<<BEEP_ON);
          }
       }
-
+      
       
       // end Strom
       
       //MARK: ADC
-            if (status & (1<<PWM_ADC)) // ADC tempsensor lesen, beep einschalten 
-            {
-               
-               status &= ~(1<<PWM_ADC);
-               led_temp = readKanal(ADC_TEMP_PIN); 
-               
-               pwmimpuls = 4*(led_temp-TEMP_DELAY);
-               
-               if (pwmimpuls > (0xFF-8))
-               {
-                  pwmimpuls = 0xFF-10;
-                  status &= ~(1<<FAN_ON);
-                  OCR1A = pwmimpuls;
-                  OUTPORTB &= ~(1<<PWM_FAN_PIN); // Fan OFF
-               }
-               if (status & (1<<FAN_ON))
-               {
-                  OCR1A = pwmimpuls;
-               }
-               
-               
-            }
-
+      if (status & (1<<PWM_ADC)) // ADC tempsensor lesen, beep einschalten 
+      {
+         
+         status &= ~(1<<PWM_ADC);
+         
+         led_temp = readKanal(ADC_TEMP_PIN); 
+         
+         pwmimpuls = 4*(led_temp-TEMP_OFFSET); // groesserer Bereich
+         
+         
+         if (pwmimpuls > (TIM1_TOP-2))
+         {
+            pwmimpuls = TIM1_TOP-2;
+            status &= ~(1<<FAN_ON); // Fan OFF 
+            //  OCR1A = pwmimpuls;
+            OUTPORTB &= ~(1<<PWM_FAN_PIN); // Fan OFF
+         }
+         //if (status & (1<<FAN_ON))
+         {
+            OCR1A = pwmimpuls;
+         }
+    //     OCR1A = TIM1_TOP -70 + (led_temp-TEMP_OFFSET) ;
+         
+      }
       
-//MARK: Temp      
+      
+      //MARK: Temp      
       // Temperatur
-      if (led_temp < TEMP_MAX)
+      if (led_temp < TEMP_FAN)
       {
          //OCR2A = TIMER2_COMPA_TEMP;
          OCR0A = OCR0A_TEMP;
@@ -377,7 +379,7 @@ void main (void)
             OUTPORTA |= (1<<OUT_OFF_PIN); // output OFF
          }
       }
-      else if (led_temp > (TEMP_MAX + 1))
+      else if (led_temp > (TEMP_FAN + 1))
       {
          if ((status & (1<<FAN_ON)))
          {
@@ -389,7 +391,7 @@ void main (void)
          }
       }
       
-
+      
       
       //LOOPLEDPORT ^= (1<<LOOPLED);
       

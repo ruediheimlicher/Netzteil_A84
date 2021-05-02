@@ -576,7 +576,7 @@ void lcd_put_frac(char* string, uint8_t start, uint8_t komma, uint8_t frac)
 void lcd_put_zeit(uint8_t minuten, uint8_t stunden)
 {
 	//							13:15
-	int8_t i; 
+	//int8_t i; 
 	if (stunden< 10)
 	{
 		//	lcd_putc(' ');

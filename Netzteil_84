@@ -1,1 +1,3 @@
 Netzteil mit ATTiny84
+avr-size -C --mcu=attiny84 Netzteil_84.elf
+
