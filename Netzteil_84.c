@@ -158,8 +158,11 @@ void timer1(void)
    TCNT1 = 0;                             //RŸcksetzen des Timers
    //OSZILO;
    //ICR1 = 0xFF;
-   ICR1 = TIM1_TOP;
-   OCR1A = TIM1_TOP-2; // 20ms
+//   ICR1 = TIM1_TOP;
+//   OCR1A = TIM1_TOP-2; // 20ms
+   
+   ICR1 = TEMP_FAN;
+   OCR1A = TEMP_FAN-2;
  //  OCR1B =100;
 //   OCR2A = 0x02;
    //ICR1 = 0xFF;
@@ -341,21 +344,28 @@ void main (void)
          
          led_temp = readKanal(ADC_TEMP_PIN); 
          
-         pwmimpuls = 4*(led_temp-TEMP_OFFSET); // groesserer Bereich
-         
-         
-         if (pwmimpuls > (TIM1_TOP-2))
-         {
-            pwmimpuls = TIM1_TOP-2;
-            status &= ~(1<<FAN_ON); // Fan OFF 
-            //  OCR1A = pwmimpuls;
-            OUTPORTB &= ~(1<<PWM_FAN_PIN); // Fan OFF
-         }
+         /*
+          pwmimpuls = 4*(led_temp-TEMP_OFFSET); // groesserer Bereich
+          
+          
+          if (pwmimpuls > (TIM1_TOP-2))
+          {
+          pwmimpuls = TIM1_TOP-2;
+          status &= ~(1<<FAN_ON); // Fan OFF 
+          //  OCR1A = pwmimpuls;
+          OUTPORTB &= ~(1<<PWM_FAN_PIN); // Fan OFF
+          }
+          */
          //if (status & (1<<FAN_ON))
+         
+         //          OCR1A = pwmimpuls;
+         if (led_temp < TEMP_FAN)
          {
-            OCR1A = pwmimpuls;
+            OCR1A = led_temp -10;
+            
          }
-    //     OCR1A = TIM1_TOP -70 + (led_temp-TEMP_OFFSET) ;
+         
+         //     OCR1A = TIM1_TOP -70 + (led_temp-TEMP_OFFSET) ;
          
       }
       
@@ -390,13 +400,8 @@ void main (void)
             status &= ~(1<<BEEP_ON);
          }
       }
-      
-      
-      
-      //LOOPLEDPORT ^= (1<<LOOPLED);
-      
-      
-      // Blinky
+       
+       // Blinky
       if (loopcount0>=loopledtakt)
       {
          //OSZITOGG;
