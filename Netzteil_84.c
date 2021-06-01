@@ -53,7 +53,7 @@ volatile  uint8_t pwmimpuls = 0;
 
 volatile    uint8_t pwmpos=0;
 
-volatile    uint16_t led_temp=0; // Eingang von Kuehlkoerper, sinkend
+volatile    uint16_t npn_temp=0; // Eingang von Kuehlkoerper, sinkend
 volatile    uint16_t stromreg = 0; // Eingang von Stromregelung, sinkend
 
 volatile    uint8_t status=0;
@@ -249,8 +249,6 @@ ISR(TIM1_COMPA_vect) // CTC Timer2
       timercount1++;
       
       status |= (1<<PWM_ADC);// ADC messen ausloesen
-      
-        
    }
 }
 /*
@@ -285,8 +283,6 @@ void main (void)
    uint8_t loopcount1=0;
    //  lcd_initialize(LCD_FUNCTION_8x2, LCD_CMD_ENTRY_INC, LCD_CMD_ON);
    _delay_ms(50);
-   
-   
    
    // WDT
    // https://bigdanzblog.wordpress.com/2015/07/20/resetting-rebooting-attiny85-with-watchdog-timer-wdt/
@@ -332,47 +328,26 @@ void main (void)
             status &= ~(1<<BEEP_ON);
          }
       }
-      
-      
+            
       // end Strom
       
       //MARK: ADC
       if (status & (1<<PWM_ADC)) // ADC tempsensor lesen, beep einschalten 
       {
-         
          status &= ~(1<<PWM_ADC);
          
-         led_temp = readKanal(ADC_TEMP_PIN); 
-         
-         /*
-          pwmimpuls = 4*(led_temp-TEMP_OFFSET); // groesserer Bereich
-          
-          
-          if (pwmimpuls > (TIM1_TOP-2))
-          {
-          pwmimpuls = TIM1_TOP-2;
-          status &= ~(1<<FAN_ON); // Fan OFF 
-          //  OCR1A = pwmimpuls;
-          OUTPORTB &= ~(1<<PWM_FAN_PIN); // Fan OFF
-          }
-          */
-         //if (status & (1<<FAN_ON))
-         
-         //          OCR1A = pwmimpuls;
-         if (led_temp < TEMP_FAN)
+         npn_temp = readKanal(ADC_TEMP_PIN); 
+           
+         if (npn_temp < TEMP_FAN)
          {
-            OCR1A = led_temp -10;
+            OCR1A = npn_temp -10;
             
          }
-         
-         //     OCR1A = TIM1_TOP -70 + (led_temp-TEMP_OFFSET) ;
-         
       }
-      
-      
-      //MARK: Temp      
+            
+      //MARK: Fan      
       // Temperatur
-      if (led_temp < TEMP_FAN)
+      if (npn_temp < TEMP_FAN)
       {
          //OCR2A = TIMER2_COMPA_TEMP;
          OCR0A = OCR0A_TEMP;
@@ -384,12 +359,12 @@ void main (void)
             beep_offtime = BEEP_OFFTIME;
          }
          
-         if (led_temp < TEMP_OFF)
+         if (npn_temp < TEMP_OFF)
          {
             OUTPORTA |= (1<<OUT_OFF_PIN); // output OFF
          }
       }
-      else if (led_temp > (TEMP_FAN + 1))
+      else if (npn_temp > (TEMP_FAN + 1))
       {
          if ((status & (1<<FAN_ON)))
          {

@@ -16,7 +16,7 @@
 #define ADCPORT PORTA
 #define ADCDDR    DDRA
 #define ADC_TEMP_PIN    0 // von Kuehlkoerper
-#define ADC_STROM_PIN   1 // von OP Amp, sinkend
+#define ADC_STROM_PIN   1 // von OP Amp, steigend // (sinkend)
 
 #define OUTPORTA   PORTA
 #define OUTDDRA    DDRA
@@ -45,11 +45,11 @@
 
 #define STROM_MIN    300
 
-#define TEMP_FAN     600 // Fan starten, beep
-#define TEMP_OFF     560 // Ausschalten
+#define TEMP_FAN     520 // Fan starten, beep
+#define TEMP_OFF     470 // Ausschalten
 
 
-#define TEMP_OFFSET   560 // 70°
+#define TEMP_OFFSET   560 // 70° nicht verwendet
 
 
 
