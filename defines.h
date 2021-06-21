@@ -43,10 +43,11 @@
 #define TIM1_TOP     0xFF
 
 
-#define STROM_MIN    300
+#define STROM_MIN    500
 
-#define TEMP_FAN     520 // Fan starten, beep
-#define TEMP_OFF     470 // Ausschalten
+#define TEMP_FAN     500 // Fan starten, beep
+
+#define TEMP_OFF     450 // Ausschalten
 
 
 #define TEMP_OFFSET   560 // 70° nicht verwendet
@@ -72,6 +73,6 @@
 #define OSZITOGG OSZIPORT ^= (1<<OSZIA)
 
 
-
+//avr-size  --mcu=attiny84 -C Netzteil_84.elf
 
 #endif /* defines_h */

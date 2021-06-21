@@ -86,7 +86,7 @@ void slaveinit(void)
 
 void timer0 (void) 
 { 
-// Timer fuer Exp
+// Timer 
 //   TCCR0 |= (1<<CS00)|(1<<CS02);   //Takt /1024
 //   TCCR0 |= (1<<CS02);            //8-Bit Timer, Timer clock = system clock/256
    TCCR0A = 0;
@@ -178,7 +178,7 @@ ISR(TIM1_COMPA_vect) // CTC Timer2
    //OSZITOGG;
    //return;
    timercount0++;
-   OSZILO;
+ //  OSZILO;
    if (status & (1<<FAN_ON))
    {
       OUTPORTB |= (1<<PWM_FAN_PIN); // Fan ON
@@ -259,7 +259,7 @@ ISR(TIM1_COMPB_vect) // CTC Timer2
 */
 ISR(TIM1_OVF_vect) // CTC Timer2
 {
-   OSZIHI;
+   //OSZIHI;
    OUTPORTB &= ~(1<<PWM_FAN_PIN); // Fan OFF
   //OSZITOGG;
 }
@@ -305,6 +305,32 @@ void main (void)
       
       stromreg = readKanal(ADC_STROM_PIN); 
       
+      // Wert steigend
+      if (stromreg > STROM_MIN)
+      {
+         OCR0A = OCR0A_STROM;
+         if (!(status & (1<<STROM_ON)))
+         {
+            status |= (1<<STROM_ON);
+            beepcounter = BEEP_OFFTIME-1;
+            beepburstcounter = 0;
+            beep_offtime = BEEP_OFFTIME;
+         }
+      }
+      else if (stromreg < STROM_MIN -1)
+      {
+         if ((status & (1<<STROM_ON)))
+         {
+            status &= ~(1<<STROM_ON);
+            beepburstcounter = 0;
+            beep_offtime = BEEP_OFFTIME;
+            status &= ~(1<<BEEP_ON);
+         }
+      }
+
+
+     
+      /*
       if (stromreg < STROM_MIN)
       {
          //OSZITOGG;
@@ -328,7 +354,7 @@ void main (void)
             status &= ~(1<<BEEP_ON);
          }
       }
-            
+       */     
       // end Strom
       
       //MARK: ADC
