@@ -68,7 +68,7 @@ void slaveinit(void)
    LOOPLEDDDR |=(1<<LOOPLED); // HI
    LOOPLEDPORT |=(1<<LOOPLED);
 
-   OUTDDRA |= (1<<BLINK_PIN);      //Pin 1 von PORT D als Ausgang fuer Schalter: OFF
+   OUTDDRA |= (1<<BLINK_PIN);      //Pin 1 von PORT D als Ausgang fuer Blink-led: OFF
    OUTPORTA &= ~(1<<BLINK_PIN); // LO
    
    OUTDDRB |= (1<<BEEP_PIN);      //Pin 2 von PORT D als Ausgang fuer Buzzer
@@ -151,7 +151,7 @@ void timer1(void)
    //TCCR2B |= (1<<CS21);//
   // TCCR1B |=  (1<<CS11)   ;
    TCCR1B |= (1<<CS11) | (1<<CS11);
-   
+   TIMSK1 |= (1<<OCIE1B);    // Interrupt B En
    TIMSK1 |= (1<<OCIE1A);      //  Interrupt A En
    
    TIMSK1 |=(1<<TOIE1);                  //Overflow Interrupt aktivieren
@@ -242,6 +242,7 @@ ISR(TIM1_COMPA_vect) // CTC Timer2
          {
             status &= ~(1<<BEEP_ON);
             beep_offtime = BEEP_OFFTIME;
+            
          }
          beepcounter++;
       }
@@ -260,7 +261,7 @@ ISR(TIM1_COMPB_vect) // CTC Timer2
 ISR(TIM1_OVF_vect) // CTC Timer2
 {
    //OSZIHI;
-   OUTPORTB &= ~(1<<PWM_FAN_PIN); // Fan OFF
+   OUTPORTB &= ~(1<<PWM_FAN_PIN); // Fan ON
   //OSZITOGG;
 }
 
@@ -325,6 +326,7 @@ void main (void)
             beepburstcounter = 0;
             beep_offtime = BEEP_OFFTIME;
             status &= ~(1<<BEEP_ON);
+            status &= ~(1<<OUT_OFF); // output wieder on
          }
       }
 
@@ -373,13 +375,15 @@ void main (void)
             
       //MARK: Fan      
       // Temperatur
-      if (npn_temp < TEMP_FAN)
+      if (npn_temp < TEMP_FAN) // -2mV/¡C
       {
+         
          //OCR2A = TIMER2_COMPA_TEMP;
          OCR0A = OCR0A_TEMP;
          if (!(status & (1<<FAN_ON)))
          {
-            status |= (1<<FAN_ON);
+            //OSZILO;
+            status |= (1<<FAN_ON); // Fan ON
             beepcounter = BEEP_OFFTIME-1;
             beepburstcounter = 0;
             beep_offtime = BEEP_OFFTIME;
@@ -388,12 +392,15 @@ void main (void)
          if (npn_temp < TEMP_OFF)
          {
             OUTPORTA |= (1<<OUT_OFF_PIN); // output OFF
+            status |= (1<<OUT_OFF);
          }
       }
       else if (npn_temp > (TEMP_FAN + 1))
       {
+         
          if ((status & (1<<FAN_ON)))
          {
+            //OSZIHI;
             status &= ~(1<<FAN_ON);
             OUTPORTA &= ~(1<<OUT_OFF_PIN); // Output wieder ON
             beepburstcounter = 0;

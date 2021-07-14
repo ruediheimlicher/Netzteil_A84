@@ -40,6 +40,8 @@
 
 #define STROM_ON     5 // Stromregelung wirkt
 
+#define OUT_OFF    6 // Output ausschalten
+
 #define TIM1_TOP     0xFF
 
 
@@ -51,8 +53,6 @@
 
 
 #define TEMP_OFFSET   560 // 70° nicht verwendet
-
-
 
 #define TIMER1_BLINK_TAKT 2
 
