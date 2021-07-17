@@ -72,6 +72,7 @@ void slaveinit(void)
    OUTPORTA &= ~(1<<BLINK_PIN); // LO
    
    OUTDDRB |= (1<<BEEP_PIN);      //Pin 2 von PORT D als Ausgang fuer Buzzer
+   OUTPORTB |= (1<<BEEP_PIN); // HI
    
    OUTDDRB |= (1<<PWM_FAN_PIN);      //Pin 3 von PORT D als Ausgang fuer LED TWI
    OUTPORTB &= ~(1<<PWM_FAN_PIN); // LO   
@@ -110,6 +111,10 @@ ISR(TIM0_COMPA_vect)
    {
       //OSZITOGG;
       OUTPORTB ^= (1<<BEEP_PIN);
+   }
+   else
+   {
+      OUTPORTB |= (1<<BEEP_PIN);
    }
 }
 
@@ -151,6 +156,7 @@ void timer1(void)
    //TCCR2B |= (1<<CS21);//
   // TCCR1B |=  (1<<CS11)   ;
    TCCR1B |= (1<<CS11) | (1<<CS11);
+   
    TIMSK1 |= (1<<OCIE1B);    // Interrupt B En
    TIMSK1 |= (1<<OCIE1A);      //  Interrupt A En
    
@@ -163,7 +169,8 @@ void timer1(void)
    
    ICR1 = TEMP_FAN;
    OCR1A = TEMP_FAN-2;
- //  OCR1B =100;
+   OCR1B = TEMP_FAN-4;
+ 
 //   OCR2A = 0x02;
    //ICR1 = 0xFF;
    //DDRB |= (1<<PORTB3);
@@ -184,10 +191,10 @@ ISR(TIM1_COMPA_vect) // CTC Timer2
       OUTPORTB |= (1<<PWM_FAN_PIN); // Fan ON
    }
    
-   if (timercount0 > 5) // Takt teilen, 1s
+   if ((timercount0 % 4) == 0) // Takt teilen, ca. 1s
    {
        //OSZITOGG;
-      timercount0=0;
+      //timercount0=0;
       
       if ((status & (1<<FAN_ON)) )
       {
@@ -209,6 +216,7 @@ ISR(TIM1_COMPA_vect) // CTC Timer2
          {
             OUTPORTA &= ~(1<<BLINK_PIN);
             status &= ~(1<<BEEP_ON);
+            OUTPORTB |= (1<<BEEP_PIN);
          }
          beepcounter++;
       }
@@ -252,12 +260,14 @@ ISR(TIM1_COMPA_vect) // CTC Timer2
       status |= (1<<PWM_ADC);// ADC messen ausloesen
    }
 }
-/*
+
+//MARK: TIM1_COMPB
 ISR(TIM1_COMPB_vect) // CTC Timer2
 {
    //OSZITOGG;
+   OUTPORTB |= (1<<PWM_FAN_PIN); // Fan OFF
 }
-*/
+
 ISR(TIM1_OVF_vect) // CTC Timer2
 {
    //OSZIHI;
@@ -377,6 +387,16 @@ void main (void)
       // Temperatur
       if (npn_temp < TEMP_FAN) // -2mV/¡C
       {
+         uint16_t diff = FANFAKTOR * (TEMP_FAN - npn_temp);
+         if (diff < (TEMP_FAN-4))
+         {
+         OCR1B = TEMP_FAN - diff;
+         }
+         else
+         {
+            //OCR1B =  2;
+         }
+
          
          //OCR2A = TIMER2_COMPA_TEMP;
          OCR0A = OCR0A_TEMP;
@@ -387,9 +407,10 @@ void main (void)
             beepcounter = BEEP_OFFTIME-1;
             beepburstcounter = 0;
             beep_offtime = BEEP_OFFTIME;
+         
          }
          
-         if (npn_temp < TEMP_OFF)
+         if (npn_temp < TEMP_OFF) // Ausgang OFF
          {
             OUTPORTA |= (1<<OUT_OFF_PIN); // output OFF
             status |= (1<<OUT_OFF);
@@ -397,7 +418,7 @@ void main (void)
       }
       else if (npn_temp > (TEMP_FAN + 1))
       {
-         
+         OCR1B = npn_temp;
          if ((status & (1<<FAN_ON)))
          {
             //OSZIHI;
@@ -406,6 +427,7 @@ void main (void)
             beepburstcounter = 0;
             beep_offtime = BEEP_OFFTIME;
             status &= ~(1<<BEEP_ON);
+         
          }
       }
        

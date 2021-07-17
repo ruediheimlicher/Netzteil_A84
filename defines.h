@@ -46,6 +46,7 @@
 
 
 #define STROM_MIN    500
+#define FANFAKTOR    8 // Multiplikatorfuer OCR1A
 
 #define TEMP_FAN     500 // Fan starten, beep
 
